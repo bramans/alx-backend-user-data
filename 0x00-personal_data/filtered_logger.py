@@ -42,8 +42,10 @@ def get_db() -> mysql.connector.connection.MYSQLConnection:
 def filter_datum(fields: List[str], redaction: str, message: str,
                  separator: str) -> str:
     """ Returns regex obfuscated log messages """
-    regex_pattern = r'(?<=' + separator + '|^)(?:' + '|'.join(fields) + r')=' + r'[^' + separator + r']*'
-    return re.sub(regex_pattern, lambda m: f"{m.group(0).split('=')[0]}={redaction}", message)
+    for field in fields:
+        message = re.sub(f'{field}=(.*?){separator}',
+                         f'{field}={redaction}{separator}', message)
+    return message
 
 
 def get_logger() -> logging.Logger:
@@ -56,7 +58,7 @@ def get_logger() -> logging.Logger:
     target_handler.setLevel(logging.INFO)
 
     formatter = RedactingFormatter(list(PII_FIELDS))
-    target_handler.setFormatter(formatter)  # Fix typo here
+    target_handle.setFormatter(formatter)
 
     logger.addHandler(target_handler)
     return logger
